@@ -1,0 +1,28 @@
+--- Web Hosting Essentials ---
+​Flask
+gunicorn
+requests
+Werkzeug
+Jinja2
+​--- Telegram Bot Frameworks (99% Coverage) ---
+​pyTelegramBotAPI
+python-telegram-bot
+telethon
+pyrogram
+aiogram
+python-dotenv
+​--- Data Handling & System Utils (Permanent Solution) ---
+​psutil
+Pillow
+numpy
+pandas
+lxml
+beautifulsoup4
+aiohttp
+SQLAlchemy
+redis
+openpyxl
+pytz
+​--- Database Drivers ---
+​psycopg2-binary
+mysql-connector-python
