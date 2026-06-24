@@ -17,7 +17,7 @@
             </div>
             <div class="glass p-4 rounded-xl border-l-4 border-yellow-500 col-span-2 md:col-span-2">
                 <div class="text-gray-400 text-xs">ADMIN INFO</div>
-                <div class="text-sm font-bold">Logged in as: {{ session['user_email'] | default(admin_user) }}</div>
+                <div class="text-sm font-bold text-red-400">Logged in as: @NIROB_BBZ</div>
             </div>
         </div>
 
@@ -28,13 +28,139 @@
                 
                 <div>
                     <label class="block text-sm font-medium mb-1">VIP Price (₹)</label>
-                    <input type="number" name="vip_price" value="{{ settings.vip_price | default(500) }}" required class="w-full p-2 rounded bg-black/50 text-white border border-gray-700 focus:border-yellow-400 outline-none" min="0">
+                    <input type="number" name="vip_price" value="{{ settings['vip_price'] | default(500) }}" 
+                           required class="w-full p-2 rounded bg-black/50 text-white border border-gray-700 focus:border-yellow-400 outline-none" min="0">
                 </div>
                 
                 <div>
                     <label class="block text-sm font-medium mb-1">Premium Price (₹)</label>
-                    <input type="number" name="premium_price" value="{{ settings.premium_price | default(250) }}" required class="w-full p-2 rounded bg-black/50 text-white border border-gray-700 focus:border-yellow-400 outline-none" min="0">
+                    <input type="number" name="premium_price" value="{{ settings['premium_price'] | default(250) }}" 
+                           required class="w-full p-2 rounded bg-black/50 text-white border border-gray-700 focus:border-yellow-400 outline-none" min="0">
                 </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1">UPI ID (Payment)</label>
+                    <input type="text" name="upi_id" value="{{ settings['upi_id'] | default('@NIROB_BBX') }}" 
+                           required class="w-full p-2 rounded bg-black/50 text-white border border-gray-700 focus:border-yellow-400 outline-none">
+                </div>
+                
+                <div>
+                    <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2.5 rounded transition-all">
+                        SAVE SETTINGS
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- USER MANAGEMENT TABLE -->
+        <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-blue-400">👥 USER DATABASE ({{ all_users|length }})</h2>
+        <div class="overflow-x-auto rounded-xl border border-gray-800 shadow-2xl mb-12">
+            <table class="w-full text-left bg-black/50">
+                <thead class="bg-gray-800 text-gray-400 text-xs uppercase sticky top-0 z-10">
+                    <tr>
+                        <th class="p-4 w-[250px]">User Info</th>
+                        <th class="p-4 w-[100px]">Plan</th>
+                        <th class="p-4 w-[100px]">Status</th>
+                        <th class="p-4 w-[350px] text-center">Manage Plan & Action</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm">
+                    {% for user in all_users %}
+                    <tr class="border-b border-gray-800 hover:bg-gray-900/50 transition">
+                        <td class="p-4">
+                            <div class="flex items-center gap-3">
+                                <img src="{{ user['photo_url'] or 'https://placehold.co/32x32/1f2937/a1a1aa?text=U' }}" 
+                                     onerror="this.onerror=null;this.src='https://placehold.co/32x32/1f2937/a1a1aa?text=U';" 
+                                     class="w-8 h-8 rounded-full object-cover border border-cyan-500/50">
+                                <div>
+                                    <div class="font-bold text-white">{{ user['email'] or 'No Email' }}</div>
+                                    <div class="text-gray-500 text-xs font-mono">{{ user['firebase_uid'][:12] }}...</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-4">
+                            <span class="px-3 py-1 rounded text-xs font-semibold"
+                                  style="background-color: 
+                                      {% if user['plan_type'] == 'VIP' %}#f59e0b; 
+                                      {% elif user['plan_type'] == 'Premium' %}#10b981; 
+                                      {% else %}#6b7280;{% endif %}">
+                                {{ user['plan_type'] }} ({{ user['bot_limit'] }})
+                            </span>
+                        </td>
+                        <td class="p-4">
+                            {% if user['is_banned'] %}
+                                <span class="text-red-500 font-bold">BANNED</span>
+                            {% else %}
+                                <span class="text-green-500 font-bold">ACTIVE</span>
+                            {% endif %}
+                        </td>
+                        
+                        <td class="p-4">
+                            <div class="flex flex-col gap-2">
+                                <!-- Ban/Unban -->
+                                <form action="{{ url_for('admin_update_user') }}" method="POST">
+                                    <input type="hidden" name="uid" value="{{ user['firebase_uid'] }}">
+                                    <input type="hidden" name="action" value="{% if user['is_banned'] %}unban{% else %}ban{% endif %}">
+                                    <button type="submit" class="w-full text-xs font-bold py-2 px-4 rounded 
+                                        {% if user['is_banned'] %}bg-green-600 hover:bg-green-700{% else %}bg-red-600 hover:bg-red-700{% endif %}">
+                                        {% if user['is_banned'] %}✅ UNBAN{% else %}🚫 BAN USER{% endif %}
+                                    </button>
+                                </form>
+
+                                <!-- Plan Change -->
+                                <form action="{{ url_for('admin_update_user') }}" method="POST" class="flex gap-1">
+                                    <input type="hidden" name="uid" value="{{ user['firebase_uid'] }}">
+                                    <input type="hidden" name="action" value="set_plan">
+                                    
+                                    <select name="plan" class="bg-gray-800 text-white p-2 rounded text-sm">
+                                        <option value="Free" {% if user['plan_type'] == 'Free' %}selected{% endif %}>Free</option>
+                                        <option value="Premium" {% if user['plan_type'] == 'Premium' %}selected{% endif %}>Premium</option>
+                                        <option value="VIP" {% if user['plan_type'] == 'VIP' %}selected{% endif %}>VIP</option>
+                                    </select>
+                                    
+                                    <input type="number" name="limit" value="{{ user['bot_limit'] }}" 
+                                           class="w-16 bg-gray-800 text-white p-2 rounded text-center">
+                                    
+                                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 px-4 rounded font-bold">SET</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- GLOBAL BOTS -->
+        <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-green-400">🤖 ALL BOTS ({{ bots | length }})</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for bot in bots %}
+            <div class="glass p-5 rounded-xl border border-gray-700">
+                <div class="font-bold text-white mb-1">{{ bot['bot_name'] }}</div>
+                <div class="text-xs text-gray-500 mb-2">Owner: {{ bot['firebase_uid'][:12] }}...</div>
+                <div class="text-sm {% if bot['status'] == 'running' %}text-green-400{% else %}text-red-400{% endif %} font-semibold">
+                    {{ bot['status']|upper }}
+                </div>
+                
+                <div class="flex gap-2 mt-4">
+                    <a href="{{ url_for('bot_action', action='start', bot_id=bot['id']) }}" 
+                       class="flex-1 text-center py-2 bg-green-600/80 hover:bg-green-500 text-white rounded text-sm">START</a>
+                    <a href="{{ url_for('bot_action', action='stop', bot_id=bot['id']) }}" 
+                       class="flex-1 text-center py-2 bg-red-600/80 hover:bg-red-500 text-white rounded text-sm">STOP</a>
+                    <a href="{{ url_for('bot_action', action='delete', bot_id=bot['id']) }}" 
+                       onclick="return confirm('Delete this bot?')" 
+                       class="flex-1 text-center py-2 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm">DELETE</a>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-span-full text-center py-12 text-gray-500">
+                No bots found yet.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}                </div>
 
                 <div>
                     <label class="block text-sm font-medium mb-1">UPI ID (Payment)</label>
